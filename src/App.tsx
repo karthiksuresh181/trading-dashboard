@@ -1,16 +1,27 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Trash2 } from 'lucide-react';
+
+const ACCOUNT_SIZES = [
+  { value: 0, label: 'Disabled' },
+  { value: 5000, label: '$5,000' },
+  { value: 10000, label: '$10,000' },
+  { value: 20000, label: '$20,000' },
+  { value: 60000, label: '$60,000' },
+  { value: 100000, label: '$100,000' }
+];
 
 const RiskCalculator = () => {
   const [accounts, setAccounts] = useState(() => {
     const savedAccounts = localStorage.getItem('riskAccounts');
     return savedAccounts ? JSON.parse(savedAccounts) : [{
       id: 1,
+      accountSize: 0,
       balance: '',
       riskPercentage: '1',
       roundTo: 5,
-      riskAmount: 0
+      riskAmount: 0,
+      actualBalance: 0
     }];
   });
 
@@ -18,19 +29,30 @@ const RiskCalculator = () => {
     localStorage.setItem('riskAccounts', JSON.stringify(accounts));
   }, [accounts]);
 
-  const calculateRisk = (balance, riskPercentage, roundTo) => {
+  const calculateActualBalance = (balance, accountSize) => {
+    if (!accountSize) return parseFloat(balance) || 0;
+    const maxDrawdown = accountSize * 0.1;
+    const difference = accountSize - parseFloat(balance);
+    return maxDrawdown - difference;
+  };
+
+  const calculateRisk = (balance, riskPercentage, roundTo, accountSize) => {
     if (!balance || !riskPercentage) return 0;
-    const risk = (parseFloat(balance) * (parseFloat(riskPercentage) / 100));
+    const actualBalance = calculateActualBalance(balance, accountSize);
+    if (actualBalance <= 0) return 0;
+    const risk = (actualBalance * (parseFloat(riskPercentage) / 100));
     return Math.round(risk / roundTo) * roundTo;
   };
 
   const handleAddAccount = () => {
     setAccounts([...accounts, {
       id: Date.now(),
+      accountSize: 0,
       balance: '',
       riskPercentage: '1',
       roundTo: 5,
-      riskAmount: 0
+      riskAmount: 0,
+      actualBalance: 0
     }]);
   };
 
@@ -42,10 +64,15 @@ const RiskCalculator = () => {
     setAccounts(accounts.map(account => {
       if (account.id === id) {
         const updatedAccount = { ...account, [field]: value };
+        updatedAccount.actualBalance = calculateActualBalance(
+          updatedAccount.balance,
+          updatedAccount.accountSize
+        );
         updatedAccount.riskAmount = calculateRisk(
           updatedAccount.balance,
           updatedAccount.riskPercentage,
-          updatedAccount.roundTo
+          updatedAccount.roundTo,
+          updatedAccount.accountSize
         );
         return updatedAccount;
       }
@@ -55,10 +82,10 @@ const RiskCalculator = () => {
 
   const generateRiskOptions = () => {
     const options = [];
-    for (let i = 0.1; i <= 4; i += 0.1) {
+    for (let i = 1; i <= 20; i++) {
       options.push(
-        <option key={i} value={i.toFixed(1)}>
-          {i.toFixed(1)}%
+        <option key={i} value={i}>
+          {i}%
         </option>
       );
     }
@@ -72,83 +99,120 @@ const RiskCalculator = () => {
           {accounts.map((account, index) => (
             <Card key={account.id} className="bg-gray-800 border-gray-700 shadow-xl h-full">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sky-400 text-lg">
-                  Account {index + 1}
-                </CardTitle>
+                <div className="flex justify-between items-center">
+                  <CardTitle className="text-sky-400 text-lg">
+                    Account {index + 1}
+                  </CardTitle>
+                  <button
+                    onClick={() => handleDeleteAccount(account.id)}
+                    className="text-red-400 hover:text-red-300 transition-colors p-1 rounded-lg 
+                             hover:bg-red-500/10"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                </div>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6">
+                {/* Account Size Selection */}
                 <div>
-                  <label className="block text-sm font-medium text-sky-300 mb-1">
-                    Account Balance (USD)
+                  <label className="block text-sm font-medium text-sky-300 mb-2 flex items-center gap-2">
+                    Account Size
+                    {account.accountSize > 0 && (
+                      <span className="text-xs text-sky-500">(10% Max Drawdown: ${(account.accountSize * 0.1).toFixed(2)})</span>
+                    )}
                   </label>
-                  <input
-                    type="number"
-                    value={account.balance}
-                    onChange={(e) => handleInputChange(account.id, 'balance', e.target.value)}
+                  <select
+                    value={account.accountSize}
+                    onChange={(e) => handleInputChange(account.id, 'accountSize', Number(e.target.value))}
                     className="w-full p-2 bg-gray-700 border-gray-600 text-white rounded focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
-                    placeholder="Enter balance"
-                  />
+                  >
+                    {ACCOUNT_SIZES.map(size => (
+                      <option key={size.value} value={size.value}>
+                        {size.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-sky-300 mb-1">
-                    Risk Percentage
-                  </label>
-                  <div className="flex gap-2">
-                    <select
-                      value={account.riskPercentage}
-                      onChange={(e) => handleInputChange(account.id, 'riskPercentage', e.target.value)}
-                      className="w-2/3 p-2 bg-gray-700 border-gray-600 text-white rounded focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
-                    >
-                      {generateRiskOptions()}
-                    </select>
+                {/* Balance Fields Row */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-sky-300 mb-2">
+                      Current Balance
+                    </label>
                     <input
                       type="number"
-                      value={account.riskPercentage}
-                      onChange={(e) => handleInputChange(account.id, 'riskPercentage', e.target.value)}
-                      className="w-1/3 p-2 bg-gray-700 border-gray-600 text-white rounded focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
-                      step="0.1"
-                      min="0.1"
-                      max="4"
+                      value={account.balance}
+                      onChange={(e) => handleInputChange(account.id, 'balance', e.target.value)}
+                      className="w-full p-2 bg-gray-700 border-gray-600 text-white rounded focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+                      placeholder="Enter balance"
                     />
                   </div>
+
+                  {account.accountSize > 0 && (
+                    <div>
+                      <label className="block text-sm font-medium text-sky-300 mb-2">
+                        Actual Balance
+                      </label>
+                      <div className="w-full p-2 bg-gray-900/50 border border-sky-500/20 text-sky-300 rounded">
+                        ${account.actualBalance.toFixed(2)}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-sky-300 mb-1">
-                    Round To Nearest
-                  </label>
-                  <input
-                    type="number"
-                    value={account.roundTo}
-                    onChange={(e) => handleInputChange(account.id, 'roundTo', e.target.value)}
-                    className="w-full p-2 bg-gray-700 border-gray-600 text-white rounded focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
-                    step="1"
-                    min="1"
-                  />
-                </div>
+                {/* Risk Settings Section */}
+                <div className="pt-2 border-t border-gray-700">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-sky-300 mb-2">
+                        Risk Percentage (1-20%)
+                      </label>
+                      <div className="flex gap-2">
+                        <select
+                          value={account.riskPercentage}
+                          onChange={(e) => handleInputChange(account.id, 'riskPercentage', e.target.value)}
+                          className="w-2/3 p-2 bg-gray-700 border-gray-600 text-white rounded focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+                        >
+                          {generateRiskOptions()}
+                        </select>
+                        <input
+                          type="number"
+                          value={account.riskPercentage}
+                          onChange={(e) => handleInputChange(account.id, 'riskPercentage', e.target.value)}
+                          className="w-1/3 p-2 bg-gray-700 border-gray-600 text-white rounded focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+                          step="1"
+                          min="1"
+                          max="20"
+                        />
+                      </div>
+                    </div>
 
-                <div className="bg-gray-700 p-4 rounded-lg border border-gray-600">
-                  <div className="text-sky-300 font-medium">
-                    Risk Amount: ${account.riskAmount.toFixed(2)}
+                    <div>
+                      <label className="block text-sm font-medium text-sky-300 mb-2">
+                        Round To Nearest
+                      </label>
+                      <input
+                        type="number"
+                        value={account.roundTo}
+                        onChange={(e) => handleInputChange(account.id, 'roundTo', e.target.value)}
+                        className="w-full p-2 bg-gray-700 border-gray-600 text-white rounded focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+                        step="1"
+                        min="1"
+                      />
+                    </div>
+
+                    <div className="bg-sky-500/10 p-4 rounded-lg border border-sky-500/20">
+                      <div className="text-lg text-sky-300 font-medium">
+                        Risk Amount: ${account.riskAmount.toFixed(2)}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </CardContent>
-              <CardFooter className="justify-end">
-                <button
-                  onClick={() => handleDeleteAccount(account.id)}
-                  className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 
-                           hover:text-red-300 rounded-lg transition-all duration-200 border border-red-500/20 
-                           hover:border-red-500/30 shadow-lg hover:shadow-red-500/10"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Delete Account
-                </button>
-              </CardFooter>
             </Card>
           ))}
 
-          {/* New Account Card */}
           <button
             onClick={handleAddAccount}
             className="group h-full min-h-[200px] rounded-lg border-2 border-dashed border-gray-600 
