@@ -2,7 +2,7 @@
   "name": "trading-risk-calculator",
   "private": true,
   "version": "0.1.0",
-  "homepage": "https://github.com/karthiksuresh181/trading-risk-calculator.git",
+  "homepage": "https://github.com/karthiksuresh181/trading-risk-calculator/",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d build"
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",
