@@ -30,7 +30,7 @@ const RiskCalculator = () => {
   }, [accounts]);
 
   const calculateActualBalance = (balance, accountSize) => {
-    if (!accountSize) return parseFloat(balance) || 0;
+    if (!accountSize || !balance) return parseFloat(balance) || 0;
     const maxDrawdown = accountSize * 0.1;
     const difference = accountSize - parseFloat(balance);
     return maxDrawdown - difference;
@@ -41,6 +41,7 @@ const RiskCalculator = () => {
     const actualBalance = calculateActualBalance(balance, accountSize);
     if (actualBalance <= 0) return 0;
     const risk = (actualBalance * (parseFloat(riskPercentage) / 100));
+    if (!roundTo || Number(roundTo) === 0) return risk;
     return Math.round(risk / roundTo) * roundTo;
   };
 
