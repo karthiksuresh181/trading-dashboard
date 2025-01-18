@@ -21,7 +21,8 @@ const RiskCalculator = () => {
       riskPercentage: '1',
       roundTo: 5,
       riskAmount: 0,
-      actualBalance: 0
+      actualBalance: 0,
+      note: '',
     }];
   });
 
@@ -53,7 +54,8 @@ const RiskCalculator = () => {
       riskPercentage: '1',
       roundTo: 5,
       riskAmount: 0,
-      actualBalance: 0
+      actualBalance: 0,
+      note: ''
     }]);
   };
 
@@ -207,6 +209,17 @@ const RiskCalculator = () => {
                       <div className="text-lg text-sky-300 font-medium">
                         Risk Amount: ${account.riskAmount.toFixed(2)}
                       </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-sky-300 mb-2">
+                        Note
+                      </label>
+                      <textarea
+                        value={account.note}
+                        onChange={(e) => handleInputChange(account.id, 'note', e.target.value)}
+                        className="w-full p-2 bg-gray-700 border-gray-600 text-white rounded focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+                      />
                     </div>
                   </div>
                 </div>
