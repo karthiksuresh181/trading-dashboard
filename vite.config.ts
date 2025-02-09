@@ -4,7 +4,7 @@ import { defineConfig } from "vite"
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: "/trading-risk-calculator",
+  base: "/trading-dashboard",
   plugins: [react()],
   resolve: {
     alias: {

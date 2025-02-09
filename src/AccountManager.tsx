@@ -11,7 +11,7 @@ const ACCOUNT_SIZES = [
   { value: 100000, label: '$100,000' }
 ];
 
-const RiskCalculator = () => {
+const AccountManager = () => {
   const [accounts, setAccounts] = useState(() => {
     const savedAccounts = localStorage.getItem('riskAccounts');
     return savedAccounts ? JSON.parse(savedAccounts) : [{
@@ -103,9 +103,15 @@ const RiskCalculator = () => {
             <Card key={account.id} className="bg-gray-800 border-gray-700 shadow-xl h-full">
               <CardHeader className="pb-2">
                 <div className="flex justify-between items-center">
-                  <CardTitle className="text-sky-400 text-lg">
-                    Account {index + 1}
-                  </CardTitle>
+                  <div>
+                    <CardTitle className="text-xl font-bold bg-gradient-to-r from-sky-300 to-sky-500 
+                                 text-transparent bg-clip-text hover:from-sky-200 
+                                 hover:to-sky-400 transition-all duration-300">
+                      Account {index + 1}
+                    </CardTitle>
+                    <div className="h-0.5 w-16 bg-gradient-to-r from-sky-500 to-transparent 
+                                    rounded-full mt-1"></div>
+                  </div>
                   <button
                     onClick={() => handleDeleteAccount(account.id)}
                     className="text-red-400 hover:text-red-300 transition-colors p-1 rounded-lg 
@@ -247,4 +253,4 @@ const RiskCalculator = () => {
   );
 };
 
-export default RiskCalculator;
+export default AccountManager;
