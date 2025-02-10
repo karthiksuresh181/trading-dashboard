@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, History, TrendingUp, TrendingDown } from 'lucide-react';
+import { Plus, Trash2, History, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -18,6 +18,20 @@ const PairManagerApp = () => {
     localStorage.setItem('tradingPairs', JSON.stringify(pairs));
   }, [pairs]);
 
+  // Check if a date is from today
+  const isToday = (dateString) => {
+    const date = new Date(dateString);
+    const today = new Date();
+    return date.getDate() === today.getDate() &&
+      date.getMonth() === today.getMonth() &&
+      date.getFullYear() === today.getFullYear();
+  };
+
+  // Check if a pair is valid (updated today)
+  const isPairValid = (pair) => {
+    return isToday(pair.lastUpdated) && !pair.manuallyInvalidated;
+  };
+
   const addPair = () => {
     const newPair = {
       id: Date.now(),
@@ -26,7 +40,8 @@ const PairManagerApp = () => {
       dailyBias: 'bearish',
       lastUpdated: new Date().toISOString(),
       history: [],
-      isEditing: true
+      isEditing: true,
+      manuallyInvalidated: false
     };
     setPairs([...pairs, newPair]);
   };
@@ -52,13 +67,26 @@ const PairManagerApp = () => {
             ...p,
             [field]: value,
             lastUpdated: new Date().toISOString(),
-            history: newHistory
+            history: newHistory,
+            manuallyInvalidated: false
           };
         }
         return {
           ...p,
           [field]: value,
           lastUpdated: new Date().toISOString()
+        };
+      }
+      return p;
+    }));
+  };
+
+  const toggleValidation = (pairId) => {
+    setPairs(pairs.map(p => {
+      if (p.id === pairId) {
+        return {
+          ...p,
+          manuallyInvalidated: !p.manuallyInvalidated
         };
       }
       return p;
@@ -86,161 +114,193 @@ const PairManagerApp = () => {
       <div className="container mx-auto max-w-[1400px]">
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {pairs.map((pair) => (
-            <Card key={pair.id} className="bg-gray-800 border-gray-700 shadow-xl">
-              <CardHeader className="pb-4">
-                <div className="flex justify-between items-center">
-                  {pair.isEditing ? (
-                    <input
-                      type="text"
-                      value={pair.name}
-                      onChange={(e) => updatePair(pair.id, 'name', e.target.value)}
-                      onKeyDown={(e) => handleKeyPress(e, pair.id)}
-                      onBlur={(e) => {
-                        if (e.target.value.trim()) {
-                          updatePair(pair.id, 'isEditing', false);
-                        }
-                      }}
-                      placeholder="Enter pair name"
-                      className="flex-1 px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 
-                               focus:border-sky-500 focus:outline-none text-white"
-                      autoFocus
-                    />
-                  ) : (
-                    <div className="flex-1">
-                      <CardTitle
-                        className="text-xl font-bold bg-gradient-to-r from-sky-300 to-sky-500 
-                                 text-transparent bg-clip-text cursor-pointer hover:from-sky-200 
-                                 hover:to-sky-400 transition-all duration-300"
-                        onClick={() => updatePair(pair.id, 'isEditing', true)}
-                      >
-                        {pair.name || 'Unnamed Pair'}
-                      </CardTitle>
-                      <div className="h-0.5 w-16 bg-gradient-to-r from-sky-500 to-transparent 
-                                   rounded-full mt-1"></div>
-                    </div>
-                  )}
-                  <button
-                    onClick={() => removePair(pair.id)}
-                    className="text-red-400 hover:text-red-300 transition-colors p-1 rounded-lg 
-                             hover:bg-red-500/10"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
-                </div>
-              </CardHeader>
-
-              <CardContent className="space-y-6">
-                {/* Bias Selection Section */}
-                <div className="grid grid-cols-2 gap-4">
-                  {/* Weekly Bias */}
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-sky-300">
-                      Weekly Bias
-                    </label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        onClick={() => updatePair(pair.id, 'weeklyBias', 'bullish')}
-                        className={`flex items-center justify-center gap-2 p-3 rounded-lg border 
-                                 transition-all duration-200 ${pair.weeklyBias === 'bullish'
-                            ? 'bg-green-500/20 border-green-500 text-green-400'
-                            : 'bg-gray-700 border-gray-600 text-gray-400 hover:bg-green-500/10 hover:border-green-500/50'
-                          }`}
-                      >
-                        <TrendingUp className="w-5 h-5" />
-                        Bullish
-                      </button>
-                      <button
-                        onClick={() => updatePair(pair.id, 'weeklyBias', 'bearish')}
-                        className={`flex items-center justify-center gap-2 p-3 rounded-lg border 
-                                 transition-all duration-200 ${pair.weeklyBias === 'bearish'
-                            ? 'bg-red-500/20 border-red-500 text-red-400'
-                            : 'bg-gray-700 border-gray-600 text-gray-400 hover:bg-red-500/10 hover:border-red-500/50'
-                          }`}
-                      >
-                        <TrendingDown className="w-5 h-5" />
-                        Bearish
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Daily Bias */}
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-sky-300">
-                      Daily Bias
-                    </label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        onClick={() => updatePair(pair.id, 'dailyBias', 'bullish')}
-                        className={`flex items-center justify-center gap-2 p-3 rounded-lg border 
-                                 transition-all duration-200 ${pair.dailyBias === 'bullish'
-                            ? 'bg-green-500/20 border-green-500 text-green-400'
-                            : 'bg-gray-700 border-gray-600 text-gray-400 hover:bg-green-500/10 hover:border-green-500/50'
-                          }`}
-                      >
-                        <TrendingUp className="w-5 h-5" />
-                        Bullish
-                      </button>
-                      <button
-                        onClick={() => updatePair(pair.id, 'dailyBias', 'bearish')}
-                        className={`flex items-center justify-center gap-2 p-3 rounded-lg border 
-                                 transition-all duration-200 ${pair.dailyBias === 'bearish'
-                            ? 'bg-red-500/20 border-red-500 text-red-400'
-                            : 'bg-gray-700 border-gray-600 text-gray-400 hover:bg-red-500/10 hover:border-red-500/50'
-                          }`}
-                      >
-                        <TrendingDown className="w-5 h-5" />
-                        Bearish
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* History Toggle and Last Updated */}
-                <div className="pt-4 space-y-4">
-                  <button
-                    onClick={() => toggleHistory(pair.id)}
-                    className="flex items-center gap-2 text-sky-400 hover:text-sky-300 transition-colors"
-                  >
-                    <History className="w-4 h-4" />
-                    <span className="text-sm">{showHistory[pair.id] ? 'Hide History' : 'View History'}</span>
-                  </button>
-
-                  {showHistory[pair.id] && pair.history.length > 0 && (
-                    <div className="space-y-3">
-                      {pair.history.map((entry, index) => (
-                        <div key={index} className="bg-gray-900/50 p-3 rounded-lg border border-gray-700">
-                          <div className="text-sm text-gray-400">
-                            {new Date(entry.date).toLocaleDateString()}
-                          </div>
-                          <div className="grid grid-cols-2 gap-2 mt-2">
-                            <div>
-                              <span className="text-xs text-gray-500">Daily:</span>
-                              <span className={`ml-2 text-sm ${entry.dailyBias === 'bullish' ? 'text-green-400' : 'text-red-400'
-                                }`}>
-                                {entry.dailyBias}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-xs text-gray-500">Weekly:</span>
-                              <span className={`ml-2 text-sm ${entry.weeklyBias === 'bullish' ? 'text-green-400' : 'text-red-400'
-                                }`}>
-                                {entry.weeklyBias}
-                              </span>
-                            </div>
-                          </div>
+          {pairs.map((pair) => {
+            const valid = isPairValid(pair);
+            return (
+              <Card
+                key={pair.id}
+                className={`bg-gray-800 border-gray-700 shadow-xl transition-all duration-300
+                ${!valid ? 'opacity-75 border-red-500/50' : ''}`}
+              >
+                <CardHeader className="pb-4">
+                  <div className="flex justify-between items-center">
+                    <div className="flex-1 flex items-center gap-2">
+                      {!valid && (
+                        <AlertCircle className="w-5 h-5 text-red-500 animate-pulse" />
+                      )}
+                      {pair.isEditing ? (
+                        <input
+                          type="text"
+                          value={pair.name}
+                          onChange={(e) => updatePair(pair.id, 'name', e.target.value)}
+                          onKeyDown={(e) => handleKeyPress(e, pair.id)}
+                          onBlur={(e) => {
+                            if (e.target.value.trim()) {
+                              updatePair(pair.id, 'isEditing', false);
+                            }
+                          }}
+                          placeholder="Enter pair name"
+                          className="flex-1 px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 
+                                 focus:border-sky-500 focus:outline-none text-white"
+                          autoFocus
+                        />
+                      ) : (
+                        <div className="flex-1">
+                          <CardTitle
+                            className="text-xl font-bold bg-gradient-to-r from-sky-300 to-sky-500 
+                                   text-transparent bg-clip-text cursor-pointer hover:from-sky-200 
+                                   hover:to-sky-400 transition-all duration-300"
+                            onClick={() => updatePair(pair.id, 'isEditing', true)}
+                          >
+                            {pair.name || 'Unnamed Pair'}
+                          </CardTitle>
+                          <div className="h-0.5 w-16 bg-gradient-to-r from-sky-500 to-transparent 
+                                     rounded-full mt-1"></div>
                         </div>
-                      ))}
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => toggleValidation(pair.id)}
+                        className={`transition-colors p-1 rounded-lg ${pair.manuallyInvalidated
+                          ? 'text-red-400 hover:text-red-300 hover:bg-red-500/10'
+                          : 'text-green-400 hover:text-green-300 hover:bg-green-500/10'
+                          }`}
+                      >
+                        {pair.manuallyInvalidated ? (
+                          <XCircle className="w-5 h-5" />
+                        ) : (
+                          <CheckCircle2 className="w-5 h-5" />
+                        )}
+                      </button>
+                      <button
+                        onClick={() => removePair(pair.id)}
+                        className="text-red-400 hover:text-red-300 transition-colors p-1 rounded-lg 
+                               hover:bg-red-500/10"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                  {!valid && (
+                    <div className="mt-2 text-sm text-red-400">
+                      {pair.manuallyInvalidated ? 'Manually marked as invalid' : 'Needs daily update'}
                     </div>
                   )}
+                </CardHeader>
 
-                  <div className="text-xs text-gray-500">
-                    Last updated: {new Date(pair.lastUpdated).toLocaleString()}
+                <CardContent className="space-y-6">
+                  {/* Bias Selection Section */}
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Weekly Bias */}
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-sky-300">
+                        Weekly Bias
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          onClick={() => updatePair(pair.id, 'weeklyBias', 'bullish')}
+                          className={`flex items-center justify-center gap-2 p-3 rounded-lg border 
+                                 transition-all duration-200 ${pair.weeklyBias === 'bullish'
+                              ? 'bg-green-500/20 border-green-500 text-green-400'
+                              : 'bg-gray-700 border-gray-600 text-gray-400 hover:bg-green-500/10 hover:border-green-500/50'
+                            }`}
+                        >
+                          <TrendingUp className="w-5 h-5" />
+                          Bullish
+                        </button>
+                        <button
+                          onClick={() => updatePair(pair.id, 'weeklyBias', 'bearish')}
+                          className={`flex items-center justify-center gap-2 p-3 rounded-lg border 
+                                 transition-all duration-200 ${pair.weeklyBias === 'bearish'
+                              ? 'bg-red-500/20 border-red-500 text-red-400'
+                              : 'bg-gray-700 border-gray-600 text-gray-400 hover:bg-red-500/10 hover:border-red-500/50'
+                            }`}
+                        >
+                          <TrendingDown className="w-5 h-5" />
+                          Bearish
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Daily Bias */}
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-sky-300">
+                        Daily Bias
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          onClick={() => updatePair(pair.id, 'dailyBias', 'bullish')}
+                          className={`flex items-center justify-center gap-2 p-3 rounded-lg border 
+                                 transition-all duration-200 ${pair.dailyBias === 'bullish'
+                              ? 'bg-green-500/20 border-green-500 text-green-400'
+                              : 'bg-gray-700 border-gray-600 text-gray-400 hover:bg-green-500/10 hover:border-green-500/50'
+                            }`}
+                        >
+                          <TrendingUp className="w-5 h-5" />
+                          Bullish
+                        </button>
+                        <button
+                          onClick={() => updatePair(pair.id, 'dailyBias', 'bearish')}
+                          className={`flex items-center justify-center gap-2 p-3 rounded-lg border 
+                                 transition-all duration-200 ${pair.dailyBias === 'bearish'
+                              ? 'bg-red-500/20 border-red-500 text-red-400'
+                              : 'bg-gray-700 border-gray-600 text-gray-400 hover:bg-red-500/10 hover:border-red-500/50'
+                            }`}
+                        >
+                          <TrendingDown className="w-5 h-5" />
+                          Bearish
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+
+                  {/* History Toggle and Last Updated */}
+                  <div className="pt-4 space-y-4">
+                    <button
+                      onClick={() => toggleHistory(pair.id)}
+                      className="flex items-center gap-2 text-sky-400 hover:text-sky-300 transition-colors"
+                    >
+                      <History className="w-4 h-4" />
+                      <span className="text-sm">{showHistory[pair.id] ? 'Hide History' : 'View History'}</span>
+                    </button>
+
+                    {showHistory[pair.id] && pair.history.length > 0 && (
+                      <div className="space-y-3">
+                        {pair.history.map((entry, index) => (
+                          <div key={index} className="bg-gray-900/50 p-3 rounded-lg border border-gray-700">
+                            <div className="text-sm text-gray-400">
+                              {new Date(entry.date).toLocaleDateString()}
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 mt-2">
+                              <div>
+                                <span className="text-xs text-gray-500">Daily:</span>
+                                <span className={`ml-2 text-sm ${entry.dailyBias === 'bullish' ? 'text-green-400' : 'text-red-400'
+                                  }`}>
+                                  {entry.dailyBias}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-xs text-gray-500">Weekly:</span>
+                                <span className={`ml-2 text-sm ${entry.weeklyBias === 'bullish' ? 'text-green-400' : 'text-red-400'
+                                  }`}>
+                                  {entry.weeklyBias}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="text-xs text-gray-500">
+                      Last updated: {new Date(pair.lastUpdated).toLocaleString()}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })}
 
           {/* Add New Pair Button */}
           <button
