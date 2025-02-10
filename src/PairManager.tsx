@@ -1,11 +1,21 @@
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, History, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
+import { Plus, Trash2, History, TrendingUp, TrendingDown, AlertCircle, Clock, Power } from 'lucide-react';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const PairManagerApp = () => {
   const [pairs, setPairs] = useState(() => {
@@ -13,9 +23,24 @@ const PairManagerApp = () => {
     return savedPairs ? JSON.parse(savedPairs) : [];
   });
   const [showHistory, setShowHistory] = useState({});
+  const [pairToDelete, setPairToDelete] = useState(null);
 
   useEffect(() => {
     localStorage.setItem('tradingPairs', JSON.stringify(pairs));
+  }, [pairs]);
+
+  // Auto-delete unnamed pairs after 30 seconds
+  useEffect(() => {
+    const timeouts = pairs.map(pair => {
+      if (pair.isEditing && !pair.name) {
+        return setTimeout(() => {
+          setPairs(currentPairs =>
+            currentPairs.filter(p => !(p.id === pair.id && !p.name))
+          );
+        }, 30000);
+      }
+    });
+    return () => timeouts.forEach(timeout => timeout && clearTimeout(timeout));
   }, [pairs]);
 
   // Check if a date is from today
@@ -47,7 +72,10 @@ const PairManagerApp = () => {
   };
 
   const removePair = (pairId) => {
-    setPairs(pairs.filter(p => p.id !== pairId));
+    if (pairToDelete) {
+      setPairs(pairs.filter(p => p.id !== pairId));
+      setPairToDelete(null);
+    }
   };
 
   const updatePair = (pairId, field, value) => {
@@ -125,9 +153,15 @@ const PairManagerApp = () => {
                 <CardHeader className="pb-4">
                   <div className="flex justify-between items-center">
                     <div className="flex-1 flex items-center gap-2">
-                      {!valid && (
-                        <AlertCircle className="w-5 h-5 text-red-500 animate-pulse" />
-                      )}
+                      <button
+                        onClick={() => toggleValidation(pair.id)}
+                        className={`transition-colors p-1 rounded-lg ${pair.manuallyInvalidated
+                          ? 'text-red-400 hover:text-red-300 hover:bg-red-500/10'
+                          : 'text-green-400 hover:text-green-300 hover:bg-green-500/10'
+                          }`}
+                      >
+                        <Power className={`w-5 h-5 ${pair.manuallyInvalidated ? 'opacity-50' : ''}`} />
+                      </button>
                       {pair.isEditing ? (
                         <input
                           type="text"
@@ -160,21 +194,19 @@ const PairManagerApp = () => {
                       )}
                     </div>
                     <div className="flex items-center gap-2">
+                      <div className="group relative">
+                        <Clock
+                          className="w-5 h-5 text-gray-400 hover:text-gray-300 cursor-help"
+                        />
+                        <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block">
+                          <div className="bg-gray-900 text-white text-xs rounded p-2 shadow-lg whitespace-nowrap">
+                            Last updated: {new Date(pair.lastUpdated).toLocaleString()}
+                          </div>
+                        </div>
+                      </div>
+
                       <button
-                        onClick={() => toggleValidation(pair.id)}
-                        className={`transition-colors p-1 rounded-lg ${pair.manuallyInvalidated
-                          ? 'text-red-400 hover:text-red-300 hover:bg-red-500/10'
-                          : 'text-green-400 hover:text-green-300 hover:bg-green-500/10'
-                          }`}
-                      >
-                        {pair.manuallyInvalidated ? (
-                          <XCircle className="w-5 h-5" />
-                        ) : (
-                          <CheckCircle2 className="w-5 h-5" />
-                        )}
-                      </button>
-                      <button
-                        onClick={() => removePair(pair.id)}
+                        onClick={() => setPairToDelete(pair.id)}
                         className="text-red-400 hover:text-red-300 transition-colors p-1 rounded-lg 
                                hover:bg-red-500/10"
                       >
@@ -182,11 +214,6 @@ const PairManagerApp = () => {
                       </button>
                     </div>
                   </div>
-                  {!valid && (
-                    <div className="mt-2 text-sm text-red-400">
-                      {pair.manuallyInvalidated ? 'Manually marked as invalid' : 'Needs daily update'}
-                    </div>
-                  )}
                 </CardHeader>
 
                 <CardContent className="space-y-6">
@@ -255,15 +282,17 @@ const PairManagerApp = () => {
                     </div>
                   </div>
 
-                  {/* History Toggle and Last Updated */}
+                  {/* History Section */}
                   <div className="pt-4 space-y-4">
-                    <button
-                      onClick={() => toggleHistory(pair.id)}
-                      className="flex items-center gap-2 text-sky-400 hover:text-sky-300 transition-colors"
-                    >
-                      <History className="w-4 h-4" />
-                      <span className="text-sm">{showHistory[pair.id] ? 'Hide History' : 'View History'}</span>
-                    </button>
+                    {pair.history.length > 0 && (
+                      <button
+                        onClick={() => toggleHistory(pair.id)}
+                        className="flex items-center gap-2 text-sky-400 hover:text-sky-300 transition-colors"
+                      >
+                        <History className="w-4 h-4" />
+                        <span className="text-sm">{showHistory[pair.id] ? 'Hide History' : 'View History'}</span>
+                      </button>
+                    )}
 
                     {showHistory[pair.id] && pair.history.length > 0 && (
                       <div className="space-y-3">
@@ -292,11 +321,19 @@ const PairManagerApp = () => {
                         ))}
                       </div>
                     )}
-
-                    <div className="text-xs text-gray-500">
-                      Last updated: {new Date(pair.lastUpdated).toLocaleString()}
-                    </div>
                   </div>
+
+                  {/* Status Indicators */}
+                  {!valid && (
+                    <div className="flex items-center justify-center">
+                      <div className="bg-gray-900/80 px-3 py-1.5 rounded-full flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 text-red-500 animate-pulse" />
+                        <span className="text-sm text-red-400">
+                          {pair.manuallyInvalidated ? 'Manually deactivated' : 'Needs daily update'}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )
@@ -319,6 +356,32 @@ const PairManagerApp = () => {
           </button>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={pairToDelete !== null} onOpenChange={() => setPairToDelete(null)}>
+        <AlertDialogContent className="bg-gray-800 border border-gray-700">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Confirm Deletion</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-400">
+              Are you sure you want to delete this trading pair? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              className="bg-gray-700 text-white hover:bg-gray-600 border-gray-600"
+              onClick={() => setPairToDelete(null)}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 text-white hover:bg-red-700"
+              onClick={removePair}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
