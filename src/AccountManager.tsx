@@ -11,7 +11,7 @@ const ACCOUNT_SIZES = [
   { value: 100000, label: '$100,000' }
 ];
 
-const AccountManager = () => {
+const AccountManagerApp = () => {
   const [accounts, setAccounts] = useState(() => {
     const savedAccounts = localStorage.getItem('riskAccounts');
     return savedAccounts ? JSON.parse(savedAccounts) : [{
@@ -253,4 +253,4 @@ const AccountManager = () => {
   );
 };
 
-export default AccountManager;
+export default AccountManagerApp;

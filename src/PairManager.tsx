@@ -7,7 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-const TradingPairsApp = () => {
+const PairManagerApp = () => {
   const [pairs, setPairs] = useState(() => {
     const savedPairs = localStorage.getItem('tradingPairs');
     return savedPairs ? JSON.parse(savedPairs) : [];
@@ -263,4 +263,4 @@ const TradingPairsApp = () => {
   );
 };
 
-export default TradingPairsApp;
+export default PairManagerApp;
