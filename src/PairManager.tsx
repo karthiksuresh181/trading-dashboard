@@ -66,7 +66,9 @@ const PairManagerApp = () => {
       lastUpdated: new Date().toISOString(),
       history: [],
       isEditing: true,
-      manuallyInvalidated: false
+      manuallyInvalidated: false,
+      weeklyNote: '',
+      dailyNote: ''
     };
     setPairs([...pairs, newPair]);
   };
@@ -250,6 +252,19 @@ const PairManagerApp = () => {
                       </div>
                     </div>
 
+                    <div>
+                      <label className="block text-sm font-medium text-sky-300 mb-2">
+                        Note
+                      </label>
+                      <textarea
+                        value={pair.weeklyNote}
+                        onChange={(e) => updatePair(pair.id, 'weeklyNote', e.target.value)}
+                        className="w-full p-1 bg-gray-700 border-gray-600 text-white rounded focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
                     {/* Daily Bias */}
                     <div className="space-y-2">
                       <label className="block text-sm font-medium text-sky-300">
@@ -279,6 +294,17 @@ const PairManagerApp = () => {
                           Bearish
                         </button>
                       </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-sky-300 mb-2">
+                        Note
+                      </label>
+                      <textarea
+                        value={pair.dailyNote}
+                        onChange={(e) => updatePair(pair.id, 'dailyNote', e.target.value)}
+                        className="w-full p-1 bg-gray-700 border-gray-600 text-white rounded focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+                      />
                     </div>
                   </div>
 
