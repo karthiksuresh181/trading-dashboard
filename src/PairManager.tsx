@@ -73,9 +73,9 @@ const PairManagerApp = () => {
     setPairs([...pairs, newPair]);
   };
 
-  const removePair = (pairId) => {
+  const removePair = () => {
     if (pairToDelete) {
-      setPairs(pairs.filter(p => p.id !== pairId));
+      setPairs(pairs.filter(p => p.id !== pairToDelete));
       setPairToDelete(null);
     }
   };
@@ -379,20 +379,20 @@ const PairManagerApp = () => {
       <AlertDialog open={pairToDelete !== null} onOpenChange={() => setPairToDelete(null)}>
         <AlertDialogContent className="bg-neutral-800 border border-neutral-700">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-white">Confirm Deletion</AlertDialogTitle>
+            <AlertDialogTitle className="text-neutral-200">Confirm Deletion</AlertDialogTitle>
             <AlertDialogDescription className="text-neutral-400">
               Are you sure you want to delete this trading pair? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel
-              className="bg-neutral-700 text-white hover:bg-neutral-600 border-neutral-600"
+              className="bg-neutral-700 text-neutral-200 hover:bg-neutral-600 border-neutral-600"
               onClick={() => setPairToDelete(null)}
             >
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-600 text-white hover:bg-red-700"
+              className="bg-red-600 text-neutral-200 hover:bg-red-700"
               onClick={removePair}
             >
               Delete

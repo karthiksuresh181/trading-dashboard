@@ -1,6 +1,16 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Trash2 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const ACCOUNT_SIZES = [
   { value: 0, label: 'Disabled' },
@@ -25,6 +35,7 @@ const AccountManagerApp = () => {
       note: '',
     }];
   });
+  const [accountToDelete, setAccountToDelete] = useState(null);
 
   useEffect(() => {
     localStorage.setItem('riskAccounts', JSON.stringify(accounts));
@@ -59,9 +70,12 @@ const AccountManagerApp = () => {
     }]);
   };
 
-  const handleDeleteAccount = (id) => {
-    setAccounts(accounts.filter(account => account.id !== id));
-  };
+  const removeAccount = () => {
+    if (accountToDelete) {
+      setAccounts(accounts.filter(account => account.id !== accountToDelete));
+      setAccountToDelete(null);
+    }
+  }
 
   const handleInputChange = (id, field, value) => {
     setAccounts(accounts.map(account => {
@@ -113,7 +127,7 @@ const AccountManagerApp = () => {
                                     rounded-full mt-1"></div>
                   </div>
                   <button
-                    onClick={() => handleDeleteAccount(account.id)}
+                    onClick={() => setAccountToDelete(account.id)}
                     className="text-red-500 hover:text-red-400 transition-colors p-1 rounded-lg 
                              hover:bg-red-500/10"
                   >
@@ -249,6 +263,32 @@ const AccountManagerApp = () => {
           </button>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={accountToDelete !== null} onOpenChange={() => setAccountToDelete(null)}>
+        <AlertDialogContent className="bg-neutral-800 border border-neutral-700">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-neutral-200">Confirm Deletion</AlertDialogTitle>
+            <AlertDialogDescription className="text-neutral-400">
+              Are you sure you want to delete this account? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              className="bg-neutral-700 text-neutral-200 hover:bg-neutral-600 border-neutral-600"
+              onClick={() => setAccountToDelete(null)}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 text-neutral-200 hover:bg-red-700"
+              onClick={removeAccount}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
