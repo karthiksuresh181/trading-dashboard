@@ -1,8 +1,20 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth0 } from "@auth0/auth0-react";
 import WeeklyCalendar from "./WeeklyCalendar.tsx";
+import { Button } from "./components/ui/button.tsx";
 
 const TabbedAppContainer = ({ App1, App2 }) => {
+  const LogoutButton = () => {
+    const { logout } = useAuth0();
+
+    return (
+      <Button onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}>
+        Log Out
+      </Button>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-neutral-900 p-4">
       <div className="container mx-auto max-w-[1400px]">
@@ -12,6 +24,8 @@ const TabbedAppContainer = ({ App1, App2 }) => {
             Trading Dashboard
           </h1>
         </div>
+
+        <LogoutButton />
 
         <div className="mb-8">
           <WeeklyCalendar />
