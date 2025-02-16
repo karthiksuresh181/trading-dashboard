@@ -80,6 +80,15 @@ const PairManagerApp = () => {
     }
   };
 
+  const isBullish = (pair, isWeeklyBias) => {
+    return isWeeklyBias ? pair.weeklyBias === 'bullish' : pair.dailyBias === 'bullish';
+  }
+
+  const toggleBias = (pair, isWeeklyBias) => {
+    const newBias = isBullish(pair, isWeeklyBias) ? 'bearish' : 'bullish';
+    updatePair(pair.id, isWeeklyBias ? 'weeklyBias' : 'dailyBias', newBias);
+  };
+
   const updatePair = (pairId, field, value) => {
     setPairs(pairs.map(p => {
       if (p.id === pairId) {
@@ -153,7 +162,7 @@ const PairManagerApp = () => {
                 ${!valid ? 'opacity-75 border-red-500/60' : ''}`}
               >
                 <CardHeader className="pb-4">
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center gap-2">
                     <div className="flex-1 flex items-center gap-2">
                       <button
                         onClick={() => toggleValidation(pair.id)}
@@ -226,30 +235,26 @@ const PairManagerApp = () => {
                       <label className="block text-sm font-medium text-neutral-300">
                         Weekly Bias
                       </label>
-                      <div className="grid grid-cols-2 gap-2">
-                        <button
-                          onClick={() => updatePair(pair.id, 'weeklyBias', 'bullish')}
-                          className={`flex items-center justify-center gap-2 p-3 rounded-lg border 
-                                 transition-all duration-200 ${pair.weeklyBias === 'bullish'
-                              ? 'bg-green-500/20 border-green-500 text-green-400'
-                              : 'bg-neutral-900 border-neutral-600 text-neutral-400 hover:bg-green-500/10 hover:border-green-500/50 hover:text-green-400/50'
-                            }`}
-                        >
-                          <TrendingUp className="w-5 h-5" />
-                          Bullish
-                        </button>
-                        <button
-                          onClick={() => updatePair(pair.id, 'weeklyBias', 'bearish')}
-                          className={`flex items-center justify-center gap-2 p-3 rounded-lg border 
-                                 transition-all duration-200 ${pair.weeklyBias === 'bearish'
-                              ? 'bg-red-500/20 border-red-500 text-red-400'
-                              : 'bg-neutral-900 border-neutral-600 text-neutral-400 hover:bg-red-500/10 hover:border-red-500/50 hover:text-red-400/50'
-                            }`}
-                        >
-                          <TrendingDown className="w-5 h-5" />
-                          Bearish
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => toggleBias(pair, true)}
+                        className={`w-full flex items-center justify-center gap-2 p-3 rounded-lg border 
+          transition-all duration-200 ${isBullish(pair, true)
+                            ? 'bg-green-500/20 border-green-500 text-green-400'
+                            : 'bg-red-500/20 border-red-500 text-red-400'
+                          }`}
+                      >
+                        {isBullish(pair, true) ? (
+                          <>
+                            <TrendingUp className="w-5 h-5" />
+                            Bullish
+                          </>
+                        ) : (
+                          <>
+                            <TrendingDown className="w-5 h-5" />
+                            Bearish
+                          </>
+                        )}
+                      </button>
                     </div>
 
                     <textarea
@@ -266,30 +271,26 @@ const PairManagerApp = () => {
                       <label className="block text-sm font-medium text-neutral-300">
                         Daily Bias
                       </label>
-                      <div className="grid grid-cols-2 gap-2">
-                        <button
-                          onClick={() => updatePair(pair.id, 'dailyBias', 'bullish')}
-                          className={`flex items-center justify-center gap-2 p-3 rounded-lg border 
-                                 transition-all duration-200 ${pair.dailyBias === 'bullish'
-                              ? 'bg-green-500/20 border-green-500 text-green-400'
-                              : 'bg-neutral-900 border-neutral-600 text-neutral-400 hover:bg-green-500/10 hover:border-green-500/50 hover:text-green-400/50'
-                            }`}
-                        >
-                          <TrendingUp className="w-5 h-5" />
-                          Bullish
-                        </button>
-                        <button
-                          onClick={() => updatePair(pair.id, 'dailyBias', 'bearish')}
-                          className={`flex items-center justify-center gap-2 p-3 rounded-lg border 
-                                 transition-all duration-200 ${pair.dailyBias === 'bearish'
-                              ? 'bg-red-500/20 border-red-500 text-red-400'
-                              : 'bg-neutral-900 border-neutral-600 text-neutral-400 hover:bg-red-500/10 hover:border-red-500/50 hover:text-red-400/50'
-                            }`}
-                        >
-                          <TrendingDown className="w-5 h-5" />
-                          Bearish
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => toggleBias(pair, false)}
+                        className={`w-full flex items-center justify-center gap-2 p-3 rounded-lg border 
+          transition-all duration-200 ${isBullish(pair, false)
+                            ? 'bg-green-500/20 border-green-500 text-green-400'
+                            : 'bg-red-500/20 border-red-500 text-red-400'
+                          }`}
+                      >
+                        {isBullish(pair, false) ? (
+                          <>
+                            <TrendingUp className="w-5 h-5" />
+                            Bullish
+                          </>
+                        ) : (
+                          <>
+                            <TrendingDown className="w-5 h-5" />
+                            Bearish
+                          </>
+                        )}
+                      </button>
                     </div>
 
                     <textarea
