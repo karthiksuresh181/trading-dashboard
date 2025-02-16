@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, History, TrendingUp, TrendingDown, AlertCircle, Clock, Power } from 'lucide-react';
+import { Plus, Trash2, TrendingUp, TrendingDown, AlertCircle, Clock, Power } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -22,7 +22,6 @@ const PairManagerApp = () => {
     const savedPairs = localStorage.getItem('tradingPairs');
     return savedPairs ? JSON.parse(savedPairs) : [];
   });
-  const [showHistory, setShowHistory] = useState({});
   const [pairToDelete, setPairToDelete] = useState(null);
 
   useEffect(() => {
@@ -138,13 +137,6 @@ const PairManagerApp = () => {
         updatePair(pairId, 'isEditing', false);
       }
     }
-  };
-
-  const toggleHistory = (pairId) => {
-    setShowHistory(prev => ({
-      ...prev,
-      [pairId]: !prev[pairId]
-    }));
   };
 
   return (
@@ -291,47 +283,6 @@ const PairManagerApp = () => {
                     placeholder='note . . . '
                     className="w-full p-1 bg-neutral-800 border-neutral-600 text-neutral-300 rounded focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500"
                   />
-
-                  {/* History Section */}
-                  {/* <div className="pt-2 space-y-2">
-                    {pair.history.length > 0 && (
-                      <button
-                        onClick={() => toggleHistory(pair.id)}
-                        className="flex items-center gap-2 text-neutral-400 hover:text-neutral-300 transition-colors"
-                      >
-                        <History className="w-4 h-4" />
-                        <span className="text-sm">{showHistory[pair.id] ? 'Hide History' : 'View History'}</span>
-                      </button>
-                    )}
-
-                    {showHistory[pair.id] && pair.history.length > 0 && (
-                      <div className="space-y-3">
-                        {pair.history.map((entry, index) => (
-                          <div key={index} className="bg-neutral-900/50 p-3 rounded-lg border border-neutral-700">
-                            <div className="text-sm text-neutral-400">
-                              {new Date(entry.date).toLocaleDateString()}
-                            </div>
-                            <div className="grid grid-cols-2 gap-2 mt-2">
-                              <div>
-                                <span className="text-xs text-neutral-400">Daily:</span>
-                                <span className={`ml-2 text-sm ${entry.dailyBias === 'bullish' ? 'text-green-400' : 'text-red-400'
-                                  }`}>
-                                  {entry.dailyBias === "bullish" ? "Bullish" : "Bearish"}
-                                </span>
-                              </div>
-                              <div>
-                                <span className="text-xs text-neutral-400">Weekly:</span>
-                                <span className={`ml-2 text-sm ${entry.weeklyBias === 'bullish' ? 'text-green-400' : 'text-red-400'
-                                  }`}>
-                                  {entry.weeklyBias === "bullish" ? "Bullish" : "Bearish"}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div> */}
 
                   {/* Status Indicators */}
                   {!valid && (
