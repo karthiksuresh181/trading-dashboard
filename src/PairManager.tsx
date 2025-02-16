@@ -67,8 +67,7 @@ const PairManagerApp = () => {
       history: [],
       isEditing: true,
       manuallyInvalidated: false,
-      weeklyNote: '',
-      dailyNote: ''
+      note: ''
     };
     setPairs([...pairs, newPair]);
   };
@@ -99,7 +98,7 @@ const PairManagerApp = () => {
               dailyBias: p.dailyBias,
               weeklyBias: p.weeklyBias
             },
-            ...p.history.slice(0, 6)
+            ...p.history.slice(0, 1)
           ];
 
           return {
@@ -229,12 +228,19 @@ const PairManagerApp = () => {
 
                 <CardContent className="space-y-6">
                   {/* Bias Selection Section */}
-                  <div className="grid grid-cols-2 gap-2">
-                    {/* Weekly Bias */}
-                    <div className="space-y-2">
+                  <div className="grid grid-row-2 gap-2">
+
+
+                    <div className="grid grid-cols-2 gap-2">
                       <label className="block text-sm font-medium text-neutral-300">
                         Weekly Bias
                       </label>
+                      <label className="block text-sm font-medium text-neutral-300">
+                        Daily Bias
+                      </label>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      {/* Weekly Bias */}
                       <button
                         onClick={() => toggleBias(pair, true)}
                         className={`w-full flex items-center justify-center gap-2 p-3 rounded-lg border 
@@ -255,22 +261,7 @@ const PairManagerApp = () => {
                           </>
                         )}
                       </button>
-                    </div>
-
-                    <textarea
-                      value={pair.weeklyNote}
-                      onChange={(e) => updatePair(pair.id, 'weeklyNote', e.target.value)}
-                      placeholder='weekly note . . . '
-                      className="w-full p-1 bg-neutral-800 border-neutral-600 text-neutral-300 rounded focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    {/* Daily Bias */}
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-neutral-300">
-                        Daily Bias
-                      </label>
+                      {/* Daily Bias */}
                       <button
                         onClick={() => toggleBias(pair, false)}
                         className={`w-full flex items-center justify-center gap-2 p-3 rounded-lg border 
@@ -292,17 +283,17 @@ const PairManagerApp = () => {
                         )}
                       </button>
                     </div>
-
-                    <textarea
-                      value={pair.dailyNote}
-                      onChange={(e) => updatePair(pair.id, 'dailyNote', e.target.value)}
-                      placeholder='daily note . . . '
-                      className="w-full p-1 bg-neutral-800 border-neutral-600 text-neutral-300 rounded focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500"
-                    />
                   </div>
 
+                  <textarea
+                    value={pair.note}
+                    onChange={(e) => updatePair(pair.id, 'note', e.target.value)}
+                    placeholder='note . . . '
+                    className="w-full p-1 bg-neutral-800 border-neutral-600 text-neutral-300 rounded focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500"
+                  />
+
                   {/* History Section */}
-                  <div className="pt-4 space-y-4">
+                  <div className="pt-2 space-y-2">
                     {pair.history.length > 0 && (
                       <button
                         onClick={() => toggleHistory(pair.id)}
