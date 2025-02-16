@@ -1,5 +1,6 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { motion, AnimatePresence } from "framer-motion";
+import WeeklyCalendar from "./WeeklyCalendar.tsx";
 
 const TabbedAppContainer = ({ App1, App2 }) => {
   return (
@@ -12,8 +13,12 @@ const TabbedAppContainer = ({ App1, App2 }) => {
           </h1>
         </div>
 
+        <div className="mb-8">
+          <WeeklyCalendar />
+        </div>
+
         <Tabs defaultValue="app1" className="w-full">
-          <div className="mb-6 flex justify-center">
+          <div className="flex justify-center">
             <TabsList className="grid w-full grid-cols-2 bg-neutral-800">
               <TabsTrigger
                 value="app1"

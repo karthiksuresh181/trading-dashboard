@@ -158,8 +158,8 @@ const PairManagerApp = () => {
             return (
               <Card
                 key={pair.id}
-                className={`bg-neutral-900 border-neutral-700 shadow-xl transition-all duration-300
-                ${!valid ? 'opacity-75 border-red-500/60' : ''}`}
+                className={`bg-neutral-900 border-neutral-800 shadow-xl transition-all duration-300
+                ${!valid ? 'opacity-75 border-red-800/60' : ''}`}
               >
                 <CardHeader className="pb-4">
                   <div className="flex justify-between items-center gap-2">
@@ -207,7 +207,7 @@ const PairManagerApp = () => {
                     <div className="flex items-center gap-2">
                       <div className="group relative">
                         <Clock
-                          className="w-5 h-5 text-neutral-300 hover:text-neutral-100 cursor-help"
+                          className="w-5 h-5 text-neutral-400 hover:text-neutral-100 cursor-help"
                         />
                         <div className="absolute bottom-full right-0 mb-0 hidden group-hover:block">
                           <div className=" text-white text-xs rounded p-2 shadow-lg whitespace-nowrap">
@@ -229,7 +229,7 @@ const PairManagerApp = () => {
 
                 <CardContent className="space-y-6">
                   {/* Bias Selection Section */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-2">
                     {/* Weekly Bias */}
                     <div className="space-y-2">
                       <label className="block text-sm font-medium text-neutral-300">
@@ -265,7 +265,7 @@ const PairManagerApp = () => {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-2">
                     {/* Daily Bias */}
                     <div className="space-y-2">
                       <label className="block text-sm font-medium text-neutral-300">
