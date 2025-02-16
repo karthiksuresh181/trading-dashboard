@@ -293,7 +293,7 @@ const PairManagerApp = () => {
                   />
 
                   {/* History Section */}
-                  <div className="pt-2 space-y-2">
+                  {/* <div className="pt-2 space-y-2">
                     {pair.history.length > 0 && (
                       <button
                         onClick={() => toggleHistory(pair.id)}
@@ -331,7 +331,7 @@ const PairManagerApp = () => {
                         ))}
                       </div>
                     )}
-                  </div>
+                  </div> */}
 
                   {/* Status Indicators */}
                   {!valid && (
