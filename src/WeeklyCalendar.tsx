@@ -33,12 +33,12 @@ const WeeklyCalendar = () => {
               p-4 rounded-lg border transition-all duration-200
               min-w-[120px] flex-1
               ${day.highlighted
-                ? 'bg-neutral-800 border-neutral-600'
+                ? 'bg-neutral-800'
                 : 'bg-neutral-900 border-neutral-800'
               }
               ${day.isToday && day.highlighted
                 ? 'border-green-600'
-                : ''
+                : 'border-neutral-600'
               }
             `}
           >
