@@ -26,6 +26,7 @@ const AccountManagerApp = () => {
     const savedAccounts = localStorage.getItem('riskAccounts');
     return savedAccounts ? JSON.parse(savedAccounts) : [{
       id: 1,
+      name: "Account 1",
       accountSize: 0,
       balance: '',
       riskPercentage: '1',
@@ -33,6 +34,7 @@ const AccountManagerApp = () => {
       riskAmount: 0,
       actualBalance: 0,
       note: '',
+      isEditing: false
     }];
   });
   const [accountToDelete, setAccountToDelete] = useState(null);
@@ -60,13 +62,15 @@ const AccountManagerApp = () => {
   const handleAddAccount = () => {
     setAccounts([...accounts, {
       id: Date.now(),
+      name: "Account " + (accounts.length + 1),
       accountSize: 0,
       balance: '',
       riskPercentage: '1',
       roundTo: 5,
       riskAmount: 0,
       actualBalance: 0,
-      note: ''
+      note: '',
+      isEditing: true
     }]);
   };
 
@@ -109,23 +113,51 @@ const AccountManagerApp = () => {
     return options;
   };
 
+  const handleKeyPress = (e, accountId) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (e.target.value.trim()) {
+        handleInputChange(accountId, 'isEditing', false);
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-neutral-900 p-4">
       <div className="container mx-auto max-w-[1400px]">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {accounts.map((account, index) => (
+          {accounts.map((account) => (
             <Card key={account.id} className="bg-neutral-900 border-neutral-700 shadow-xl h-full">
               <CardHeader className="pb-2">
                 <div className="flex justify-between items-center">
-                  <div>
-                    <CardTitle className="text-xl font-bold bg-gradient-to-r from-neutral-300 to-neutral-500 
+                  {account.isEditing ? (
+                    <input
+                      type="text"
+                      value={account.name}
+                      onChange={(e) => handleInputChange(account.id, 'name', e.target.value)}
+                      onKeyDown={(e) => handleKeyPress(e, account.id)}
+                      onBlur={(e) => {
+                        if (e.target.value.trim()) {
+                          handleInputChange(account.id, 'isEditing', false);
+                        }
+                      }}
+                      placeholder="Enter pair name"
+                      className="flex-1 px-4 py-2 rounded-lg bg-neutral-900 border border-neutral-600 
+                           focus:border-neutral-500 focus:outline-none text-white"
+                      autoFocus
+                    />
+                  ) : (
+                    <div className='flex-1'>
+                      <CardTitle className="text-xl font-bold bg-gradient-to-r from-neutral-300 to-neutral-500 
                                  text-transparent bg-clip-text hover:from-neutral-200 
-                                 hover:to-neutral-400 transition-all duration-300">
-                      Account {index + 1}
-                    </CardTitle>
-                    <div className="h-0.5 w-16 bg-gradient-to-r from-neutral-500 to-transparent 
+                                 hover:to-neutral-400 transition-all duration-300"
+                        onClick={() => handleInputChange(account.id, 'isEditing', true)}>
+                        {account.name}
+                      </CardTitle>
+                      <div className="h-0.5 w-16 bg-gradient-to-r from-neutral-500 to-transparent 
                                     rounded-full mt-1"></div>
-                  </div>
+                    </div>
+                  )}
                   <button
                     onClick={() => setAccountToDelete(account.id)}
                     className="text-red-500 hover:text-red-400 transition-colors p-1 rounded-lg 
