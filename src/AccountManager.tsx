@@ -11,6 +11,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from './components/ui/label';
 
 const ACCOUNT_SIZES = [
   { value: 0, label: 'Disabled' },
@@ -19,6 +21,24 @@ const ACCOUNT_SIZES = [
   { value: 20000, label: '$20,000' },
   { value: 60000, label: '$60,000' },
   { value: 100000, label: '$100,000' }
+];
+
+const CALCULATION_MODES = {
+  RISK_AMOUNT: 'riskAmount',
+  RISK_PERCENTAGE: 'riskPercentage'
+};
+
+const CALCULATION_OPTIONS = [
+  {
+    id: CALCULATION_MODES.RISK_AMOUNT,
+    label: 'Risk Amount',
+    description: 'Use risk percentage to calculate risk amount'
+  },
+  {
+    id: CALCULATION_MODES.RISK_PERCENTAGE,
+    label: 'Risk Percentage',
+    description: 'Use target risk amount to calculate risk percentage'
+  }
 ];
 
 const AccountManagerApp = () => {
@@ -34,7 +54,10 @@ const AccountManagerApp = () => {
       riskAmount: 0,
       actualBalance: 0,
       note: '',
-      isEditing: false
+      isEditing: false,
+      calculationMode: CALCULATION_MODES.RISK_AMOUNT,
+      targetRiskAmount: 0,
+      remainingTrades: 0
     }];
   });
   const [accountToDelete, setAccountToDelete] = useState(null);
@@ -59,6 +82,20 @@ const AccountManagerApp = () => {
     return Math.round(risk / roundTo) * roundTo;
   };
 
+  const calculateRiskPercentage = (balance, targetRiskAmount, accountSize) => {
+    if (!balance || !targetRiskAmount) return 0;
+    const actualBalance = calculateActualBalance(balance, accountSize);
+    if (actualBalance <= 0) return 0;
+    return (targetRiskAmount / actualBalance) * 100;
+  };
+
+  const calculateRemainingTrades = (balance, riskAmount, accountSize) => {
+    if (!balance || !riskAmount || riskAmount <= 0) return 0;
+    const actualBalance = calculateActualBalance(balance, accountSize);
+    const tradesLeft = Math.floor(actualBalance / riskAmount);
+    return tradesLeft < 0 ? 0 : tradesLeft;
+  };
+
   const handleAddAccount = () => {
     setAccounts([...accounts, {
       id: Date.now(),
@@ -70,7 +107,10 @@ const AccountManagerApp = () => {
       riskAmount: 0,
       actualBalance: 0,
       note: '',
-      isEditing: true
+      isEditing: true,
+      calculationMode: CALCULATION_MODES.RISK_AMOUNT,
+      targetRiskAmount: 0,
+      remainingTrades: 0
     }]);
   };
 
@@ -89,12 +129,29 @@ const AccountManagerApp = () => {
           updatedAccount.balance,
           updatedAccount.accountSize
         );
-        updatedAccount.riskAmount = calculateRisk(
+
+        if (updatedAccount.calculationMode === CALCULATION_MODES.RISK_AMOUNT) {
+          updatedAccount.riskAmount = calculateRisk(
+            updatedAccount.balance,
+            updatedAccount.riskPercentage,
+            updatedAccount.roundTo,
+            updatedAccount.accountSize
+          );
+        } else {
+          updatedAccount.riskPercentage = calculateRiskPercentage(
+            updatedAccount.balance,
+            updatedAccount.targetRiskAmount,
+            updatedAccount.accountSize
+          ).toFixed(2);
+          updatedAccount.riskAmount = parseFloat(updatedAccount.targetRiskAmount);
+        }
+
+        updatedAccount.remainingTrades = calculateRemainingTrades(
           updatedAccount.balance,
-          updatedAccount.riskPercentage,
-          updatedAccount.roundTo,
+          updatedAccount.riskAmount,
           updatedAccount.accountSize
         );
+
         return updatedAccount;
       }
       return account;
@@ -216,9 +273,34 @@ const AccountManagerApp = () => {
                   )}
                 </div>
 
-                {/* Risk Settings Section */}
+                {/* New Calculation Mode Selection */}
                 <div className="pt-2 border-t border-neutral-700">
-                  <div className="space-y-4">
+                  {/* <label className="block text-sm font-medium text-neutral-300 mb-2">
+                    Calculation Mode
+                  </label> */}
+                  <RadioGroup
+                    value={account.calculationMode}
+                    onValueChange={(value) => handleInputChange(account.id, 'calculationMode', value)}
+                    className=" flex gap-4 justify-center"
+                  >
+                    {CALCULATION_OPTIONS.map((option) => (
+                      <div key={option.id} className="flex items-center gap-2">
+                        <RadioGroupItem value={option.id} id={`${account.id}-${option.id}`} className="text-neutral-300" />
+                        <Label
+                          htmlFor={`${account.id}-${option.id}`}
+                          className="leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          <div className="text-neutral-300">{option.label}</div>
+                        </Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
+                </div>
+
+                {/* Risk Settings Section */}
+                {/* <div className="pt-2 border-t border-neutral-700"> */}
+                <div className="space-y-4">
+                  {account.calculationMode === CALCULATION_MODES.RISK_AMOUNT ? (
                     <div>
                       <label className="block text-sm font-medium text-neutral-300 mb-2">
                         Risk Percentage (1-20%)
@@ -242,39 +324,66 @@ const AccountManagerApp = () => {
                         />
                       </div>
                     </div>
-
+                  ) : (
                     <div>
                       <label className="block text-sm font-medium text-neutral-300 mb-2">
-                        Round To Nearest
+                        Target Risk Amount ($)
                       </label>
                       <input
                         type="number"
-                        value={account.roundTo}
-                        onChange={(e) => handleInputChange(account.id, 'roundTo', e.target.value)}
+                        value={account.targetRiskAmount}
+                        onChange={(e) => handleInputChange(account.id, 'targetRiskAmount', e.target.value)}
                         className="w-full p-2 bg-neutral-800 border-neutral-600 text-neutral-200 rounded focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500"
                         step="1"
-                        min="1"
+                        min="0"
                       />
                     </div>
+                  )}
 
-                    <div className="bg-neutral-900 p-4 rounded-lg border border-neutral-700">
-                      <div className="text-lg text-neutral-300 font-medium">
-                        Risk Amount: ${account.riskAmount.toFixed(2)}
+
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-300 mb-2">
+                      Round To Nearest
+                    </label>
+                    <input
+                      type="number"
+                      value={account.roundTo}
+                      onChange={(e) => handleInputChange(account.id, 'roundTo', e.target.value)}
+                      className="w-full p-2 bg-neutral-800 border-neutral-600 text-neutral-200 rounded focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500"
+                      step="1"
+                      min="1"
+                    />
+                  </div>
+
+                  {/* Updated Risk Information Display */}
+                  <div className="bg-neutral-900 p-4 rounded-lg border border-neutral-700 space-y-2">
+                    <div className="text-lg text-neutral-300 font-medium flex gap-2 justify-center">
+                      <div>
+                        Amount: ${account.riskAmount.toFixed(2)}
+                      </div>
+                      <div>|</div>
+                      <div>
+                        Percentage: {parseFloat(account.riskPercentage).toFixed(2)}%
                       </div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-neutral-300 mb-2">
-                        Note
-                      </label>
-                      <textarea
-                        value={account.note}
-                        onChange={(e) => handleInputChange(account.id, 'note', e.target.value)}
-                        className="w-full p-2 bg-neutral-800 border-neutral-600 text-neutral-200 rounded focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500"
-                      />
+                    <div className="text-lg text-neutral-300 font-medium flex gap-2 justify-center">
+                      Remaining Trades: {account.remainingTrades}
                     </div>
                   </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-300 mb-2">
+                      Note
+                    </label>
+                    <textarea
+                      value={account.note}
+                      onChange={(e) => handleInputChange(account.id, 'note', e.target.value)}
+                      className="w-full p-2 bg-neutral-800 border-neutral-600 text-neutral-200 rounded focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500"
+                    />
+                  </div>
                 </div>
+                {/* </div> */}
               </CardContent>
             </Card>
           ))}
